@@ -36,22 +36,6 @@ def parse_primer_scheme(path_to_primer_scheme):
     return primer_scheme
 
 
-def parse_depth(path_to_depth):
-    depth = []
-    fieldnames = [
-        'chrom',
-        'position',
-        'depth',
-    ]
-    with open(path_to_depth) as f:
-        reader = csv.DictReader(f, fieldnames=fieldnames, delimiter='\t')
-        for row in reader:
-            row['position'] = int(row['position'])
-            row['depth'] = int(row['depth'])
-            depth.append(row)
-
-    return depth
-
 
 def primers_to_amplicons(primers):
     amplicons = []
@@ -64,9 +48,9 @@ def primers_to_amplicons(primers):
             
     return amplicons
 
+
 def main(args):
     primer_scheme = parse_primer_scheme(args.primer_scheme)
-    depth = parse_depth(args.depth)
     amplicons = primers_to_amplicons(primer_scheme)
     
     # print(json.dumps(primer_scheme))
@@ -74,10 +58,10 @@ def main(args):
     # print(json.dumps(amplicons))
     #amplicon_depths_1 = [d for d in depth if d['position'] in keyValList]
     
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', dest='depth')
-    parser.add_argument('-p', dest='primer_scheme')
+    parser.add_argument('primer_scheme')
     args = parser.parse_args()
 
     main(args)
