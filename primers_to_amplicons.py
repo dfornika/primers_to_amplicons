@@ -37,31 +37,60 @@ def parse_primer_scheme(path_to_primer_scheme):
 
 
 
-def primers_to_amplicons(primers):
-    amplicons = []
-    grouped_primers = {}
+def group_primers(primers):
+    primers_grouped_by_amplicon = {}
+    primers_grouped_by_amplicon_and_orientation = {}
     for key, group in itertools.groupby(primers, lambda x: x['amplicon_id']):
-        grouped_primers[key] = list(group)
+        primers_grouped_by_amplicon[key] = list(group)
 
+    for amplicon_id in primers_grouped_by_amplicon.keys():
+        primers_grouped_by_amplicon_and_orientation[amplicon_id] = {}
+        for key, group in itertools.groupby(primers_grouped_by_amplicon[amplicon_id], lambda x: x['orientation']):
+            primers_grouped_by_amplicon_and_orientation[amplicon_id][key] = list(group)
+
+    return primers_grouped_by_amplicon_and_orientation
+
+
+def pairwise_combinations(grouped_primers):
+    all_pairs = []
     for amplicon_id, primers in grouped_primers.items():
-        print(amplicon_id, len(primers))
-            
-    return amplicons
+        amplicon_pairs = list(itertools.product(primers["LEFT"], primers["RIGHT"]))
+        all_pairs.append(amplicon_pairs)
+
+    return all_pairs
 
 
 def main(args):
     primer_scheme = parse_primer_scheme(args.primer_scheme)
-    amplicons = primers_to_amplicons(primer_scheme)
-    
-    # print(json.dumps(primer_scheme))
-    # print(json.dumps(depth))
-    # print(json.dumps(amplicons))
-    #amplicon_depths_1 = [d for d in depth if d['position'] in keyValList]
+    grouped_primers = group_primers(primer_scheme)
+    all_pairs = pairwise_combinations(grouped_primers)
+
+    for amplicon in all_pairs:
+        for pair in amplicon:
+            if args.inner:
+                print('\t'.join([
+                    pair[0]['chrom'],
+                    str(pair[0]['chromEnd']),
+                    str(pair[1]['chromStart']),
+                    pair[0]['name'] + '|' + pair[1]['name'],
+                    '60',
+                    '+'
+                ]))
+            else:
+                print('\t'.join([
+                    pair[0]['chrom'],
+                    str(pair[0]['chromStart']),
+                    str(pair[1]['chromEnd']),
+                    pair[0]['name'] + '|' + pair[1]['name'],
+                    '60',
+                    '+'
+                ]))
     
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('primer_scheme')
+    parser.add_argument('--inner', action='store_true')
     args = parser.parse_args()
 
     main(args)
